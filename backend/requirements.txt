@@ -1,0 +1,8 @@
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+anthropic>=0.40
+python-multipart
+shapely>=2.0
+pyproj>=3.6
+pypdf>=5.0
+pytest

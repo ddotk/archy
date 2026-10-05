@@ -1,0 +1,14 @@
+{
+  "_note": "PLACEHOLDER VALUES - verify against the local building control law before any real use. Edit freely.",
+  "country": "TH",
+  "building_types": {
+    "residential_house": {
+      "setbacks_m": {"front": 3.0, "side": 2.0, "rear": 2.0},
+      "max_bcr": 0.70,
+      "max_far": 2.0,
+      "min_osr": 0.0,
+      "max_height_m": 12.0,
+      "floor_height_m": 3.2
+    }
+  }
+}

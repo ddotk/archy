@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ArchDesign Agent</title>
+<style>
+:root{--paper:#eceee7;--ink:#1c2320;--line:#c9cdc2;--accent:#2d5b86;--card:#f7f8f3}
+@media(prefers-color-scheme:dark){:root{--paper:#171b19;--ink:#e6e9e2;--line:#333a36;--accent:#7fb0d9;--card:#1e2421}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 "Noto Sans Thai","Segoe UI",system-ui,sans-serif;display:grid;grid-template-columns:320px 1fr;min-height:100vh}
+@media(max-width:760px){body{grid-template-columns:1fr}}
+aside{padding:20px;border-right:1px solid var(--line);background:var(--card)}
+main{display:flex;flex-direction:column;height:100vh}
+h1{font-size:1.15rem;margin:0 0 16px}h2{font-size:.95rem;margin:20px 0 8px}
+select,input,button,textarea{font:inherit;color:inherit}
+select,textarea,input[type=file]{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px}
+button{background:var(--accent);color:#fff;border:0;border-radius:4px;padding:8px 14px;cursor:pointer}
+button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#log{flex:1;overflow:auto;padding:20px 24px}
+.m{max-width:70ch;margin:0 0 14px;white-space:pre-wrap}.u{color:var(--accent)}
+.t{font-size:.85rem;opacity:.7}
+form{display:flex;gap:8px;padding:12px 24px;border-top:1px solid var(--line)}
+form textarea{flex:1;resize:vertical;min-height:48px}
+ul{list-style:none;padding:0;margin:8px 0;font-size:.9rem}li{display:flex;justify-content:space-between;gap:8px}
+li button{background:none;color:var(--ink);padding:0 6px;border:1px solid var(--line)}
+</style></head><body>
+<aside>
+  <h1>ArchDesign Agent</h1>
+  <label for="country">ประเทศ (ให้ agent ค้นกฎ)</label>
+  <select id="country"><option value="TH">ไทย</option><option value="JP">ญี่ปุ่น</option><option value="SG">สิงคโปร์</option><option value="US">สหรัฐฯ</option><option value="GB">สหราชอาณาจักร</option></select>
+  <h2>อัปโหลดเอกสารกฎ</h2>
+  <select id="cat"><option value="law">กฎหมาย / ผังเมือง</option><option value="fengshui">ฮวงจุ้ย / ความเชื่อ</option><option value="other">อื่น ๆ</option></select>
+  <input id="file" type="file" accept=".md,.txt,.pdf" style="margin-top:8px">
+  <button id="up" style="margin-top:8px">อัปโหลด</button>
+  <ul id="files"></ul>
+</aside>
+<main>
+  <div id="log"><p class="m t">บอกพิกัดหรือรูปที่ดิน ประเภทอาคาร และความต้องการ เช่น "ที่ดินกว้าง 20 ลึก 30 เมตร บ้านพักอาศัย 2 ชั้น"</p></div>
+  <form id="f"><textarea id="q" placeholder="พิมพ์ข้อความ" required></textarea><button>ส่ง</button></form>
+</main>
+<script>
+const $=s=>document.querySelector(s),hist=[];
+const add=(c,t)=>{const d=document.createElement("p");d.className="m "+c;d.textContent=t;$("#log").append(d);d.scrollIntoView()};
+async function files(){const r=await (await fetch("/api/knowledge")).json();
+ $("#files").innerHTML="";r.forEach(x=>{const li=document.createElement("li");li.textContent=x.category+" / "+x.name;
+  const b=document.createElement("button");b.textContent="ลบ";b.onclick=async()=>{await fetch(`/api/knowledge/${x.category}/${encodeURIComponent(x.name)}`,{method:"DELETE"});files()};li.append(b);$("#files").append(li)})}
+$("#up").onclick=async()=>{const f=$("#file").files[0];if(!f)return;const fd=new FormData();fd.append("category",$("#cat").value);fd.append("file",f);
+ const r=await fetch("/api/knowledge",{method:"POST",body:fd});if(!r.ok)alert((await r.json()).detail);$("#file").value="";files()};
+$("#f").onsubmit=async e=>{e.preventDefault();const t=$("#q").value.trim();if(!t)return;$("#q").value="";add("u",t);hist.push({role:"user",content:t});
+ const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist,country:$("#country").value})});
+ const j=await r.json();if(!r.ok){add("t",j.detail||"error");return}
+ if(j.tools.length)add("t","เครื่องมือที่ใช้: "+j.tools.map(x=>x.tool).join(", "));
+ add("",j.reply);hist.push({role:"assistant",content:j.reply})};
+files();
+</script></body></html>

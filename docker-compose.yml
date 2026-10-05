@@ -1,0 +1,10 @@
+# CPU mode (default):   docker compose up --build
+# NVIDIA GPU mode:      docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+services:
+  app:
+    build: { context: ., dockerfile: docker/Dockerfile }
+    env_file: .env
+    ports: ["8000:8000"]
+    volumes:
+      - ./data:/srv/data
+      - ./config:/srv/config
